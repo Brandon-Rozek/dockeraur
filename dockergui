@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: ./run.sh command [arguments]"
+    exit 1
+fi
+
+# Find free display number
+for ((DNum=1 ; DNum <= 100 ; DNum++)) ; do
+  [ -e /tmp/.X11-unix/X$DNum ] || break
+done
+
+RESOLUTION=1920x1080
+
+# Start nested X Server
+Xephyr :$DNum \
+        -extension MIT-SHM \
+	-extension XTEST \
+	-nolisten tcp \
+	-screen $RESOLUTION \
+	-resizeable &
+
+xephyrpid=$!
+
+# If simple ratpoison window manager exists, run it
+if command -v ratpoison; then
+	sleep 1
+	ratpoison -d :$DNum &
+else # Use the default x window manager installed
+	DISPLAY=:$DNum
+	x-window-manager &
+fi
+windowmanagerpid=$!
+
+docker run --net=host \
+            --rm \
+            -e DISPLAY=:$DNum \
+            -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
+            --user $(id -u):$(id -g) \
+	    --group-add audio \
+	    --cap-drop=ALL \
+	    --shm-size 2g \
+    	    "$@"
+kill $windowmanagerpid
+kill $xephyrpid
+
+## Explanation of docker parameters
+# --net=host is to access the X server
+# --rm is to remove the container when finished
+# The next two lines is to pass along the X server socket and display
+# --user is to set user to be non-root
+# --cap-drop=ALL is to drop all priviledges
+# --shm-size 2g is to increase shared memory
+# $@ is to pass along the rest of the arguments
