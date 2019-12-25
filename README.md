@@ -10,3 +10,11 @@ To run graphically,
 ```bash
 ./dockergui firefox
 ```
+## Dependencies
+For the download script:
+- Docker
+- Python > 3.6
+
+For the graphical executer:
+- Xephyr
+- ratpoison (optional)
