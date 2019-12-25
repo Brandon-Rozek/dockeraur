@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+from getpass import getuser
+from os import getuid, getgid, getlogin
+import subprocess
+
+parser = ArgumentParser(description="Install AUR packages into a Docker container")
+parser.add_argument("package_name", type=str, help="name of the AUR package")
+parser.add_argument("-x", type=str, metavar='EXECUTABLE', help="name of executable")
+args = vars(parser.parse_args())
+
+package_name = args['package_name']
+command = args['x']
+user = getlogin()
+uid = getuid()
+gid = getgid()
+
+if command is None:
+    print(f"Assuming executable shares the same name as package_name {package_name}")
+    command = package_name
+
+
+dockerfile = f"""FROM archlinux:latest
+
+# Install latest build packages and git
+RUN pacman -Sy --noconfirm base-devel git
+
+# Set up new user {user} with passwordless sudo
+RUN useradd {user} -u {uid} -m && \\
+        passwd -d {user} && \\
+        set -o pipefail && \\
+        printf '{user} ALL=(ALL) ALL\\n' | tee -a /etc/sudoers
+
+# Set up AUR helper yay
+USER {user}
+WORKDIR /home/{user}
+RUN git clone https://aur.archlinux.org/yay.git
+WORKDIR /home/{user}/yay
+RUN makepkg -si --noconfirm
+
+# Now you can play with whatever package you'd like
+RUN yay -S --noconfirm {package_name}
+
+ENTRYPOINT [\"/usr/bin/env\", \"{command}\"]"
+"""
+
+subprocess.run(["docker", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
