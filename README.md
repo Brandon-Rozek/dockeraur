@@ -13,7 +13,7 @@ To run graphically,
 ## Dependencies
 For the download script:
 - Docker
-- Python > 3.6
+- Python >= 3.6
 
 For the graphical executer:
 - Xephyr
