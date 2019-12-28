@@ -26,9 +26,16 @@ xephyrpid=$!
 if command -v ratpoison; then
 	sleep 1
 	ratpoison -d :$DNum &
-else # Use the default x window manager installed
+else # Use the default x window manager installed based on the host
 	DISPLAY=:$DNum
-	x-window-manager &
+	distro_id=$(lsb_release -i | awk '{print($3)}')
+
+	if [ "${distro_id}" == "Ubuntu" ] || [ "${distro_id}" == "Debian" ]; then
+		x-window-manager &
+	else
+		Xorg & #generic case (Fedora, Arch, etc) 
+	fi
+
 fi
 windowmanagerpid=$!
 
