@@ -45,4 +45,9 @@ RUN yay -S --noconfirm {package_name}
 ENTRYPOINT [\"/usr/bin/env\", \"{command}\"]"
 """
 
-subprocess.run(["docker", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+try:
+    subprocess.run(["docker", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+
+except FileNotFoundError: # primitive way to detect that docker is not installed
+    subprocess.run(["podman", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+

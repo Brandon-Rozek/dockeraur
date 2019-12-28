@@ -26,7 +26,7 @@ xephyrpid=$!
 if command -v ratpoison; then
 	sleep 1
 	ratpoison -d :$DNum &
-else # Use the default x window manager installed based on the host
+else # Use the default x window manager installed based on lsb_release id
 	DISPLAY=:$DNum
 	distro_id=$(lsb_release -i | awk '{print($3)}')
 
@@ -37,17 +37,39 @@ else # Use the default x window manager installed based on the host
 	fi
 
 fi
+
 windowmanagerpid=$!
 
-docker run --net=host \
-            --rm \
-            -e DISPLAY=:$DNum \
-            -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
-            --user $(id -u):$(id -g) \
-	    --group-add audio \
-	    --cap-drop=ALL \
-	    --shm-size 2g \
-    	    "$@"
+#detect podman or docker
+
+if command -v docker; then
+
+	docker run --net=host \
+		    --rm \
+		    -e DISPLAY=:$DNum \
+		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
+		    --user $(id -u):$(id -g) \
+		    --group-add audio \
+		    --cap-drop=ALL \
+		    --shm-size 2g \
+		    "$@"
+
+elif command -v podman; then 
+
+
+	podman run --net=host \
+		    --rm \
+		    -e DISPLAY=:$DNum \
+		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
+		    --user $(id -u):$(id -g) \
+		    --group-add audio \
+		    --cap-drop=ALL \
+		    --shm-size 2g \
+		    "$@"
+
+fi
+
+
 kill $windowmanagerpid
 kill $xephyrpid
 
