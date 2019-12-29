@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from getpass import getuser
 from os import getuid, getgid, getlogin
+from shutil import which
 import subprocess
 
 parser = ArgumentParser(description="Install AUR packages into a Docker container")
@@ -47,13 +48,19 @@ ENTRYPOINT [\"/usr/bin/env\", \"{command}\"]"
 
 # check if either docker or podman are installed
 
-docker_check = subprocess.call(["which", "docker"])
+docker_check = which("docker")
 
-if docker_check != 0:
+podman_check = which("podman")
+
+if docker_check is None:
     print("Docker not installed, building with Podman")
     engine = "podman"
-else:
+elif podman_check is None:
     engine = "docker"
+else:
+    print("Podman/Docker are not installed! Exiting...")
+    exit(1)
+
 
 subprocess.run([engine, "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
 
