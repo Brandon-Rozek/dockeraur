@@ -48,19 +48,18 @@ ENTRYPOINT [\"/usr/bin/env\", \"{command}\"]"
 
 # check if either docker or podman are installed
 
-docker_check = which("docker")
+try:
+    if which("docker") is None:
+        print("Docker not installed, building with Podman")
+        engine = "podman"
+    elif which("podman") is None:
+        engine = "docker"
+    else:
+        print("Podman/Docker are not installed! Exiting...")
+        exit(1)
 
-podman_check = which("podman")
 
-if docker_check is None:
-    print("Docker not installed, building with Podman")
-    engine = "podman"
-elif podman_check is None:
-    engine = "docker"
-else:
-    print("Podman/Docker are not installed! Exiting...")
+    subprocess.run([engine, "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+except FileNotFoundError:
+    print("An Error has occured while attempting to build the image.")
     exit(1)
-
-
-subprocess.run([engine, "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
-
