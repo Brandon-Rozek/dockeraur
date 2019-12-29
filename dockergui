@@ -33,7 +33,12 @@ else # Use the default x window manager installed based on lsb_release id
 	if [ "${distro_id}" == "Ubuntu" ] || [ "${distro_id}" == "Debian" ]; then
 		x-window-manager &
 	else
-		Xorg & #generic case (Fedora, Arch, etc) 
+		if [ "${XDG_SESSION_DESKTOP}" == "KDE" ]; then 
+			startplasma-x11 &
+		elif [ "${XDG_SESSION_DESKTOP}" == "GNOME" ]; then
+			mutter &
+		fi
+ 
 	fi
 
 fi
