@@ -45,9 +45,15 @@ RUN yay -S --noconfirm {package_name}
 ENTRYPOINT [\"/usr/bin/env\", \"{command}\"]"
 """
 
-try:
-    subprocess.run(["docker", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+# check if either docker or podman are installed
 
-except FileNotFoundError: # primitive way to detect that docker is not installed
-    subprocess.run(["podman", "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
+docker_check = subprocess.call(["which", "docker"])
+
+if docker_check != 0:
+    print("Docker not installed, building with Podman")
+    engine = "podman"
+else:
+    engine = "docker"
+
+subprocess.run([engine, "build", "-t", command, "-"], input = dockerfile, encoding = 'UTF-8')
 

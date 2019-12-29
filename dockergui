@@ -43,32 +43,23 @@ windowmanagerpid=$!
 #detect podman or docker
 
 if command -v docker; then
-
-	docker run --net=host \
-		    --rm \
-		    -e DISPLAY=:$DNum \
-		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
-		    --user $(id -u):$(id -g) \
-		    --group-add audio \
-		    --cap-drop=ALL \
-		    --shm-size 2g \
-		    "$@"
-
+	engine_of_choice="docker"
+	
 elif command -v podman; then 
-
-
-	podman run --net=host \
-		    --rm \
-		    -e DISPLAY=:$DNum \
-		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
-		    --user $(id -u):$(id -g) \
-		    --group-add audio \
-		    --cap-drop=ALL \
-		    --shm-size 2g \
-		    "$@"
-
+	engine_of_choice="podman"
 fi
 
+# then run the detected container engine
+
+$engine_of_choice run --net=host \
+		    --rm \
+		    -e DISPLAY=:$DNum \
+		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
+		    --user $(id -u):$(id -g) \
+		    --group-add audio \
+		    --cap-drop=ALL \
+		    --shm-size 2g \
+		    "$@"
 
 kill $windowmanagerpid
 kill $xephyrpid
