@@ -26,21 +26,54 @@ xephyrpid=$!
 if command -v ratpoison; then
 	sleep 1
 	ratpoison -d :$DNum &
-else # Use the default x window manager installed
+else # Use the default x window manager installed based on lsb_release id
+
 	DISPLAY=:$DNum
-	x-window-manager &
+	distro_id=$(lsb_release -i | awk '{print($3)}')
+
+	if [ "${distro_id}" == "Ubuntu" ] || [ "${distro_id}" == "Debian" ]; then
+		x-window-manager &
+	else
+		if [ "${XDG_SESSION_DESKTOP}" == "KDE" ]; then 
+			startplasma-x11 &
+		elif [ "${XDG_SESSION_DESKTOP}" == "GNOME" ]; then
+			mutter &
+		else
+			printf "%s\n" "Could not find a suitable Window Manager"
+			exit 1
+
+		fi
+ 
+	fi
+
 fi
+
 windowmanagerpid=$!
 
-docker run --net=host \
-            --rm \
-            -e DISPLAY=:$DNum \
-            -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
-            --user $(id -u):$(id -g) \
-	    --group-add audio \
-	    --cap-drop=ALL \
-	    --shm-size 2g \
-    	    "$@"
+#detect podman or docker
+
+if command -v docker; then
+	engine_of_choice="docker"
+	
+elif command -v podman; then 
+	engine_of_choice="podman"
+else
+	printf "%s\n" "Docker/Podman are not installed!"
+	exit 1
+fi
+
+# then run the detected container engine
+
+$engine_of_choice run --net=host \
+		    --rm \
+		    -e DISPLAY=:$DNum \
+		    -v /tmp/.X11-unix/X$DNum:/tmp/.X11-unix/X$DNum:rw \
+		    --user $(id -u):$(id -g) \
+		    --group-add audio \
+		    --cap-drop=ALL \
+		    --shm-size 2g \
+		    "$@"
+
 kill $windowmanagerpid
 kill $xephyrpid
 
