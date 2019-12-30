@@ -12,9 +12,9 @@ To run graphically,
 ```
 ## Dependencies
 For the download script:
-- Docker
+- Docker/Podman
 - Python >= 3.6
 
 For the graphical executer:
 - Xephyr
-- ratpoison (optional)
+- ratpoison / x-window-manager / gnome / kde
