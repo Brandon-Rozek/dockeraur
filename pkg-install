@@ -9,10 +9,12 @@ import subprocess
 parser = ArgumentParser(description="Install AUR packages into a Docker container")
 parser.add_argument("package_name", type=str, help="name of the AUR package")
 parser.add_argument("-x", type=str, metavar='EXECUTABLE', help="name of executable")
+parser.add_argument("-e", type=str, help="edit generic dockerfile")
 args = vars(parser.parse_args())
 
 package_name = args['package_name']
 command = args['x']
+edit_flag = args['e']
 user = getlogin()
 uid = getuid()
 gid = getgid()
@@ -39,6 +41,14 @@ WORKDIR /home/{user}
 RUN git clone https://aur.archlinux.org/yay.git
 WORKDIR /home/{user}/yay
 RUN makepkg -si --noconfirm
+
+"""
+if edit_flag is not None: #if -e flag is passed then take on the following string
+    extra_run = f"""RUN {edit_flag}"""
+else:
+    extra_run = ""
+
+dockerfile += extra_run + f"""
 
 # Now you can play with whatever package you'd like
 RUN yay -S --noconfirm {package_name}
