@@ -9,7 +9,7 @@ import subprocess
 parser = ArgumentParser(description="Install AUR packages into a Docker container")
 parser.add_argument("package_name", type=str, help="name of the AUR package")
 parser.add_argument("-x", type=str, metavar='EXECUTABLE', help="name of executable")
-parser.add_argument("-e", type=str, help="add extra step in dockerfile")
+parser.add_argument("-e", type=str, help="edit generic dockerfile")
 args = vars(parser.parse_args())
 
 package_name = args['package_name']
@@ -44,6 +44,7 @@ RUN makepkg -si --noconfirm
 
 #add extra step
 {"RUN " + edit_flag if edit_flag is not None else ""}
+
 
 # Now you can play with whatever package you'd like
 RUN yay -S --noconfirm {package_name}
