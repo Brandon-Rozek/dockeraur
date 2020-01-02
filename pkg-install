@@ -43,7 +43,7 @@ WORKDIR /home/{user}/yay
 RUN makepkg -si --noconfirm
 
 #add extra step
-{"RUN " + edit_flag if edit_flag is None else ""}
+{"RUN " + edit_flag if edit_flag is not None else ""}
 
 # Now you can play with whatever package you'd like
 RUN yay -S --noconfirm {package_name}
